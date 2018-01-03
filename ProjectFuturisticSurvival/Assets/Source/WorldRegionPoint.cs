@@ -77,4 +77,19 @@ public class WorldRegionPoint : Entity {
 
         renderer.material = (Material)Instantiate(this.level.resources[60]);
     }
+
+    public void undisplay()
+    {
+        MeshRenderer renderer = this.gameObject.GetComponent<MeshRenderer>();
+        if (renderer != null)
+        {
+            Destroy(renderer);
+        }
+
+        MeshFilter filter = this.gameObject.GetComponent<MeshFilter>();
+        if (filter != null)
+        {
+            Destroy(filter);
+        }
+    }
 }

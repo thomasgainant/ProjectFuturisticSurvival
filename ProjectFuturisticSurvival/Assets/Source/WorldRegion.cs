@@ -18,12 +18,13 @@ public class WorldRegion : Entity {
 
     public WorldRegion.Status status = Status.Ungenerated;
 
-    public bool computingDisplay = false;
-    public bool computingCollision = false;
+    private bool computingDisplay = false;
+    private bool computingCollision = false;
 
     public float[,] heightmap;
     public WorldRegionPoint[,] points;
     public int lod = 1; //Always multiple of 2
+    public Vector2 worldRegionCoors = Vector2.zero;
 
     public GameObject collisionObject;
 
@@ -60,7 +61,7 @@ public class WorldRegion : Entity {
 
         if (this.status == Status.DirtyCollision && !this.computingCollision)
         {
-            StartCoroutine(this.display(this.lod));
+            StartCoroutine(this.generateCollision());
         }
     }
 
@@ -93,6 +94,14 @@ public class WorldRegion : Entity {
     private IEnumerator display(int lod)
     {
         this.computingDisplay = true;
+
+        for (int i = 0; i < REGIONSIZE; i++)
+        {
+            for (int j = 0; j < REGIONSIZE; j++)
+            {
+                this.points[i, j].undisplay();
+            }
+        }
 
         for (int i = 0; i < REGIONSIZE - lod; i = i + lod)
         {
@@ -164,6 +173,12 @@ public class WorldRegion : Entity {
         this.computingCollision = false;
         this.status = Status.Displayed;
         yield return null;
+    }
+
+    public void setLod(int newLod)
+    {
+        this.lod = newLod;
+        this.status = Status.Dirty;
     }
 
     public void loadHeightmapFromNoise(int x, int y)

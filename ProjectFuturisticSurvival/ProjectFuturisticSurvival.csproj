@@ -231,6 +231,7 @@
     <Compile Include="Assets\Source\Entity.cs" />
     <Compile Include="Assets\Source\Level.cs" />
     <Compile Include="Assets\Source\WorldRegion.cs" />
+    <Compile Include="Assets\Source\WorldRegionManager.cs" />
     <Compile Include="Assets\Source\WorldRegionPoint.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

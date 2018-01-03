@@ -13,7 +13,7 @@ public class WorldRegion : Entity {
         DirtyCollision
     }
 
-    public static int REGIONSIZE = 50;//Number of WorldRegionPoints
+    public static int REGIONSIZE = 64;//Number of WorldRegionPoints - Always multiple of 2
     public static float REGIONPRECISION = 1.0f;//World space between two WorldRegionPoints at lod 1
 
     public WorldRegion.Status status = Status.Ungenerated;

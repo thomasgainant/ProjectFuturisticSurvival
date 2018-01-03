@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Entity : MonoBehaviour {
 
+    public Level level;
+
 	// Use this for initialization
 	void Start () {
         this.init();
@@ -11,7 +13,10 @@ public class Entity : MonoBehaviour {
 
     public virtual void init()
     {
-
+        if(this.level == null)
+        {
+            this.level = GameObject.FindObjectOfType<Level>();
+        }
     }
 	
 	// Update is called once per frame

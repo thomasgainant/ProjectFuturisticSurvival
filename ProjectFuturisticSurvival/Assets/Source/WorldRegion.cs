@@ -18,9 +18,11 @@ public class WorldRegion : Entity {
 
     public WorldRegion.Status status = Status.Ungenerated;
 
+    private bool computingGeneration = false;
     private bool computingDisplay = false;
     private bool computingCollision = false;
 
+    public WorldRegionManager manager;
     public float[,] heightmap;
     public WorldRegionPoint[,] points;
     public int lod = 1; //Always multiple of 2
@@ -41,18 +43,25 @@ public class WorldRegion : Entity {
             }
         }
 
+        this.points = new WorldRegionPoint[REGIONSIZE, REGIONSIZE];
+
         this.loadHeightmapFromNoise(0, 0);
 
         this.collisionObject = new GameObject("Collision");
         this.collisionObject.transform.position = this.gameObject.transform.position;
         this.collisionObject.transform.SetParent(this.gameObject.transform);
-
-        StartCoroutine(this.generate());
     }
 
     protected override void update()
     {
         base.update();
+
+        if(this.status == Status.Ungenerated
+            && this.manager.generatingRegions.Count < WorldRegionManager.REGIONSGENERATIONBUFFERSIZE
+            && !this.computingDisplay)
+        {
+            StartCoroutine(this.generate());
+        }
 
         if(this.status == Status.Dirty && !this.computingDisplay)
         {
@@ -67,7 +76,21 @@ public class WorldRegion : Entity {
 
     private IEnumerator generate()
     {
-        this.points = new WorldRegionPoint[REGIONSIZE,REGIONSIZE];
+        this.manager.generatingRegions.Add(this);
+        this.computingGeneration = true;
+
+        for (int i = 0; i < REGIONSIZE; i++)
+        {
+            for (int j = 0; j < REGIONSIZE; j++)
+            {
+                if(this.points[i, j] != null)
+                {
+                    Destroy(this.points[i, j].gameObject);
+                }
+            }
+        }
+
+        int pointsBuffer = 0;
         for(int i = 0; i < REGIONSIZE; i++)
         {
             for(int j = 0; j < REGIONSIZE; j++)
@@ -81,7 +104,11 @@ public class WorldRegion : Entity {
                 point.init();
                 this.points[i,j] = point;
 
-                yield return new WaitForEndOfFrame();
+                pointsBuffer++;
+                if(pointsBuffer >= WorldRegionManager.REGIONSPOINTSBUFFERSIZE){
+                    pointsBuffer = 0;
+                    yield return new WaitForEndOfFrame();
+                }
             }
         }
 
@@ -89,18 +116,20 @@ public class WorldRegion : Entity {
         Debug.Log("WorldRegion "+this.ToString()+" generated");
         StartCoroutine(this.generateCollision());
         StartCoroutine(this.display(this.lod));
+
+        this.manager.generatingRegions.Remove(this);
+        this.computingGeneration = false;
     }
 
     private IEnumerator display(int lod)
     {
         this.computingDisplay = true;
 
-        for (int i = 0; i < REGIONSIZE; i++)
+        MeshFilter filter = this.gameObject.GetComponent<MeshFilter>();
+        if (filter != null)
         {
-            for (int j = 0; j < REGIONSIZE; j++)
-            {
-                this.points[i, j].undisplay();
-            }
+            Destroy(filter.mesh);
+            filter.mesh = null;
         }
 
         for (int i = 0; i < REGIONSIZE - lod; i = i + lod)
@@ -116,6 +145,49 @@ public class WorldRegion : Entity {
 
                 this.points[i, j].display(lod, pointHeightmap);
                 yield return new WaitForEndOfFrame();
+            }
+        }
+
+        List<MeshFilter> meshFilters = new List<MeshFilter>();
+        for (int i = 0; i < REGIONSIZE; i++)
+        {
+            for (int j = 0; j < REGIONSIZE; j++)
+            {
+                if(this.points[i, j].gameObject.GetComponent<MeshFilter>() != null)
+                {
+                    meshFilters.Add(this.points[i, j].gameObject.GetComponent<MeshFilter>());
+                }
+            }
+        }
+        CombineInstance[] combineInstances = new CombineInstance[meshFilters.Count];
+        for(int i = 0; i < combineInstances.Length; i++)
+        {
+            if(meshFilters[i] != null){
+                combineInstances[i].mesh = meshFilters[i].mesh;
+                combineInstances[i].transform = meshFilters[i].transform.localToWorldMatrix;
+            }
+        }
+
+        MeshRenderer renderer = this.gameObject.GetComponent<MeshRenderer>();
+        if (renderer == null)
+        {
+            renderer = this.gameObject.AddComponent<MeshRenderer>();
+        }
+
+        filter = this.gameObject.GetComponent<MeshFilter>();
+        if (filter == null)
+        {
+            filter = this.gameObject.AddComponent<MeshFilter>();
+            Mesh mesh = new Mesh();
+            filter.mesh = mesh;
+        }
+        filter.mesh.CombineMeshes(combineInstances);
+
+        for (int i = 0; i < REGIONSIZE; i++)
+        {
+            for (int j = 0; j < REGIONSIZE; j++)
+            {
+                Destroy(this.points[i, j].gameObject);
             }
         }
 
@@ -178,7 +250,7 @@ public class WorldRegion : Entity {
     public void setLod(int newLod)
     {
         this.lod = newLod;
-        this.status = Status.Dirty;
+        this.status = Status.Ungenerated;
     }
 
     public void loadHeightmapFromNoise(int x, int y)

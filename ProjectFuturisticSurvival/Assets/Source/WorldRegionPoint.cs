@@ -29,6 +29,7 @@ public class WorldRegionPoint : Entity {
         }
 
         Mesh mesh = new Mesh();
+        mesh.name = "WorldRegionPointMesh";
 
         Vector3[] vertices = new Vector3[4];
 
@@ -74,21 +75,6 @@ public class WorldRegionPoint : Entity {
         filter.mesh = mesh;
         filter.sharedMesh = mesh;
 
-        Debug.Log(this.level);
-        Debug.Log(this.level.resources);
-        Debug.Log(this.level.resources[60]);
         renderer.material = (Material)Instantiate(this.level.resources[60]);
-
-        //TODO collisions for lods other than 1
-        if(lod == 1)
-        {
-            MeshCollider collider = this.gameObject.GetComponent<MeshCollider>();
-            if (collider == null)
-            {
-                collider = this.gameObject.AddComponent<MeshCollider>();
-            }
-
-            collider.sharedMesh = mesh;
-        }
     }
 }

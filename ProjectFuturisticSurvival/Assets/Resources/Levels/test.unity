@@ -182,7 +182,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   level: {fileID: 0}
   status: 0
+  computingDisplay: 0
+  computingCollision: 0
   lod: 1
+  collisionObject: {fileID: 0}
 --- !u!4 &283837160
 Transform:
   m_ObjectHideFlags: 0
@@ -290,7 +293,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   level: {fileID: 0}
   status: 0
-  lod: 2
+  computingDisplay: 0
+  computingCollision: 0
+  lod: 4
+  collisionObject: {fileID: 0}
 --- !u!4 &2025115569
 Transform:
   m_ObjectHideFlags: 0

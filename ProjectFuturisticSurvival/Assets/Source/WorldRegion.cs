@@ -9,7 +9,8 @@ public class WorldRegion : Entity {
         Ungenerated,
         Generated,
         Displayed,
-        Dirty
+        Dirty,
+        DirtyCollision
     }
 
     public static int REGIONSIZE = 50;//Number of WorldRegionPoints
@@ -17,9 +18,14 @@ public class WorldRegion : Entity {
 
     public WorldRegion.Status status = Status.Ungenerated;
 
+    public bool computingDisplay = false;
+    public bool computingCollision = false;
+
     public float[,] heightmap;
     public WorldRegionPoint[,] points;
     public int lod = 1; //Always multiple of 2
+
+    public GameObject collisionObject;
 
 	public override void init()
     {
@@ -35,7 +41,10 @@ public class WorldRegion : Entity {
         }
 
         this.loadHeightmapFromNoise(0, 0);
-        Debug.Log(this.saveHeightmap());
+
+        this.collisionObject = new GameObject("Collision");
+        this.collisionObject.transform.position = this.gameObject.transform.position;
+        this.collisionObject.transform.SetParent(this.gameObject.transform);
 
         StartCoroutine(this.generate());
     }
@@ -44,7 +53,12 @@ public class WorldRegion : Entity {
     {
         base.update();
 
-        if(this.status == Status.Dirty)
+        if(this.status == Status.Dirty && !this.computingDisplay)
+        {
+            StartCoroutine(this.display(this.lod));
+        }
+
+        if (this.status == Status.DirtyCollision && !this.computingCollision)
         {
             StartCoroutine(this.display(this.lod));
         }
@@ -72,11 +86,14 @@ public class WorldRegion : Entity {
 
         this.status = Status.Generated;
         Debug.Log("WorldRegion "+this.ToString()+" generated");
+        StartCoroutine(this.generateCollision());
         StartCoroutine(this.display(this.lod));
     }
 
     private IEnumerator display(int lod)
     {
+        this.computingDisplay = true;
+
         for (int i = 0; i < REGIONSIZE - lod; i = i + lod)
         {
             for (int j = 0; j < REGIONSIZE - lod; j = j + lod)
@@ -93,8 +110,60 @@ public class WorldRegion : Entity {
             }
         }
 
+        this.computingDisplay = false;
         this.status = Status.Displayed;
         Debug.Log("WorldRegion " + this.ToString() + " displayed");
+    }
+
+    public IEnumerator generateCollision()
+    {
+        this.computingCollision = true;
+
+        Mesh totalMesh = new Mesh();
+        totalMesh.name = "totalCollisionMesh";
+
+        Vector3[] vertices = new Vector3[4 * REGIONSIZE * REGIONSIZE];
+        int[] tri = new int[6 * REGIONSIZE * REGIONSIZE];
+
+        int verticesIndex = 0;
+        int triIndex = 0;
+        for (int i = 0; i < REGIONSIZE - 1; i++)
+        {
+            for (int j = 0; j < REGIONSIZE - 1; j++)
+            {
+                vertices[verticesIndex] = new Vector3(WorldRegion.REGIONPRECISION * i, this.heightmap[i,j], WorldRegion.REGIONPRECISION * j);
+                vertices[verticesIndex + 1] = new Vector3((WorldRegion.REGIONPRECISION * i) + WorldRegion.REGIONPRECISION, this.heightmap[i+1, j], WorldRegion.REGIONPRECISION * j);
+                vertices[verticesIndex + 2] = new Vector3(WorldRegion.REGIONPRECISION * i, this.heightmap[i, j+1],(WorldRegion.REGIONPRECISION * j) + WorldRegion.REGIONPRECISION);
+                vertices[verticesIndex + 3] = new Vector3((WorldRegion.REGIONPRECISION * i) + WorldRegion.REGIONPRECISION, this.heightmap[i+1, j+1], (WorldRegion.REGIONPRECISION * j) + WorldRegion.REGIONPRECISION);
+
+                verticesIndex += 4;
+
+                tri[triIndex] = verticesIndex;
+                tri[triIndex + 1] = verticesIndex + 2;
+                tri[triIndex + 2] = verticesIndex + 1;
+
+                tri[triIndex + 3] = verticesIndex + 2;
+                tri[triIndex + 4] = verticesIndex + 3;
+                tri[triIndex + 5] = verticesIndex + 1;
+
+                triIndex += 6;
+            }
+        }
+
+        totalMesh.vertices = vertices;
+        totalMesh.triangles = tri;
+
+        MeshCollider collider = this.collisionObject.GetComponent<MeshCollider>();
+        if (collider == null)
+        {
+            collider = this.collisionObject.AddComponent<MeshCollider>();
+        }
+
+        collider.sharedMesh = totalMesh;
+
+        this.computingCollision = false;
+        this.status = Status.Displayed;
+        yield return null;
     }
 
     public void loadHeightmapFromNoise(int x, int y)

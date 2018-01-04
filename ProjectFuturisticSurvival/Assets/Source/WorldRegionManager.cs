@@ -5,11 +5,14 @@ using UnityEngine;
 public class WorldRegionManager : Entity {
 
     public static int MAPSIZE = 256;
-    public static int REGIONSPOINTSBUFFERSIZE = 30;
-    public static int REGIONSGENERATIONBUFFERSIZE = 1;
+    public static int REGIONSPOINTSGENERATEBUFFERSIZE = 10;
+    public static int REGIONSPOINTSDISPLAYBUFFERSIZE = 20;
+    public static int REGIONSGENERATIONBUFFERSIZE = 3;
+    public static int REGIONSDISPLAYBUFFERSIZE = 1;
 
     public WorldRegion[,] regions;
     public List<WorldRegion> generatingRegions = new List<WorldRegion>();
+    public List<WorldRegion> displayingRegions = new List<WorldRegion>();
 
     public Camera mainCamera;
 

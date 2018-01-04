@@ -9,7 +9,7 @@ public class WorldRegion : Entity {
         Ungenerated,
         Generated,
         Displayed,
-        Dirty,
+        DirtyDisplay,
         DirtyCollision
     }
 
@@ -58,12 +58,14 @@ public class WorldRegion : Entity {
 
         if(this.status == Status.Ungenerated
             && this.manager.generatingRegions.Count < WorldRegionManager.REGIONSGENERATIONBUFFERSIZE
-            && !this.computingDisplay)
+            && !this.computingGeneration)
         {
             StartCoroutine(this.generate());
         }
 
-        if(this.status == Status.Dirty && !this.computingDisplay)
+        if(this.status == Status.DirtyDisplay
+            && this.manager.displayingRegions.Count < WorldRegionManager.REGIONSDISPLAYBUFFERSIZE
+            && !this.computingDisplay)
         {
             StartCoroutine(this.display(this.lod));
         }
@@ -90,6 +92,8 @@ public class WorldRegion : Entity {
             }
         }
 
+        Material material = (Material)Instantiate(this.level.resources[60]);
+
         int pointsBuffer = 0;
         for(int i = 0; i < REGIONSIZE; i++)
         {
@@ -100,12 +104,11 @@ public class WorldRegion : Entity {
                     + new Vector3(REGIONPRECISION * i, 0.0f, REGIONPRECISION * j);
                 pointObj.transform.SetParent(this.gameObject.transform);
 
-                WorldRegionPoint point = pointObj.AddComponent<WorldRegionPoint>();
-                point.init();
+                WorldRegionPoint point = new WorldRegionPoint(pointObj, material);
                 this.points[i,j] = point;
 
                 pointsBuffer++;
-                if(pointsBuffer >= WorldRegionManager.REGIONSPOINTSBUFFERSIZE){
+                if(pointsBuffer >= WorldRegionManager.REGIONSPOINTSGENERATEBUFFERSIZE){
                     pointsBuffer = 0;
                     yield return new WaitForEndOfFrame();
                 }
@@ -123,6 +126,7 @@ public class WorldRegion : Entity {
 
     private IEnumerator display(int lod)
     {
+        this.manager.displayingRegions.Add(this);
         this.computingDisplay = true;
 
         MeshFilter filter = this.gameObject.GetComponent<MeshFilter>();
@@ -132,6 +136,7 @@ public class WorldRegion : Entity {
             filter.mesh = null;
         }
 
+        int pointsBuffer = 0;
         for (int i = 0; i < REGIONSIZE - lod; i = i + lod)
         {
             for (int j = 0; j < REGIONSIZE - lod; j = j + lod)
@@ -144,7 +149,13 @@ public class WorldRegion : Entity {
                 };
 
                 this.points[i, j].display(lod, pointHeightmap);
-                yield return new WaitForEndOfFrame();
+
+                pointsBuffer++;
+                if (pointsBuffer >= WorldRegionManager.REGIONSPOINTSDISPLAYBUFFERSIZE)
+                {
+                    pointsBuffer = 0;
+                    yield return new WaitForEndOfFrame();
+                }
             }
         }
 
@@ -164,7 +175,7 @@ public class WorldRegion : Entity {
         {
             if(meshFilters[i] != null){
                 combineInstances[i].mesh = meshFilters[i].mesh;
-                combineInstances[i].transform = meshFilters[i].transform.localToWorldMatrix;
+                combineInstances[i].transform = Matrix4x4.TRS(this.gameObject.transform.InverseTransformPoint(meshFilters[i].gameObject.transform.position), Quaternion.Inverse(meshFilters[i].gameObject.transform.rotation), Vector3.one);
             }
         }
 
@@ -182,6 +193,9 @@ public class WorldRegion : Entity {
             filter.mesh = mesh;
         }
         filter.mesh.CombineMeshes(combineInstances);
+        filter.mesh.RecalculateBounds();
+        filter.mesh.RecalculateNormals();
+        renderer.material = (Material)Instantiate(this.level.resources[60]);
 
         for (int i = 0; i < REGIONSIZE; i++)
         {
@@ -191,6 +205,7 @@ public class WorldRegion : Entity {
             }
         }
 
+        this.manager.displayingRegions.Remove(this);
         this.computingDisplay = false;
         this.status = Status.Displayed;
         Debug.Log("WorldRegion " + this.ToString() + " displayed");

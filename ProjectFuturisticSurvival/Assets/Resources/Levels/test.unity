@@ -259,7 +259,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   level: {fileID: 0}
-  regions: []
+  generatingRegions: []
+  displayingRegions: []
   mainCamera: {fileID: 2123666925}
 --- !u!1 &2123666922
 GameObject:
@@ -302,7 +303,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.50735295, g: 0.6989379, b: 1, a: 0}
+  m_BackGroundColor: {r: 0.7205882, g: 0.82924837, b: 1, a: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0

@@ -2,16 +2,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class WorldRegionPoint : Entity {
+public class WorldRegionPoint {
 
-    public override void init()
-    {
-        base.init();
-    }
+    public GameObject gameObject;
+    public Material material;
 
-    protected override void update()
+    public WorldRegionPoint(GameObject gameObject, Material material)
     {
-        base.update();
+        this.gameObject = gameObject;
+        this.material = material;
     }
 
     public void display(int lod, float[] heightmap)
@@ -75,7 +74,7 @@ public class WorldRegionPoint : Entity {
         filter.mesh = mesh;
         filter.sharedMesh = mesh;
 
-        renderer.material = (Material)Instantiate(this.level.resources[60]);
+        renderer.material = this.material;
     }
 
     public void undisplay()
@@ -83,13 +82,13 @@ public class WorldRegionPoint : Entity {
         MeshRenderer renderer = this.gameObject.GetComponent<MeshRenderer>();
         if (renderer != null)
         {
-            Destroy(renderer);
+            renderer.enabled = false;
         }
 
         MeshFilter filter = this.gameObject.GetComponent<MeshFilter>();
         if (filter != null)
         {
-            Destroy(filter);
+            //Destroy(filter);
         }
     }
 }

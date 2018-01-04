@@ -22,6 +22,15 @@ public class Entity : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
         this.update();
+
+        if(this.level.status == Level.Status.Loading)
+        {
+            
+        }
+        else if (this.level.status == Level.Status.Play)
+        {
+
+        }
 	}
 
     protected virtual void update()

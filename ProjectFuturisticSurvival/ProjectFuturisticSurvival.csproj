@@ -228,8 +228,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Source\Character.cs" />
     <Compile Include="Assets\Source\Entity.cs" />
     <Compile Include="Assets\Source\Level.cs" />
+    <Compile Include="Assets\Source\Player.cs" />
+    <Compile Include="Assets\Source\Utils.cs" />
     <Compile Include="Assets\Source\WorldRegion.cs" />
     <Compile Include="Assets\Source\WorldRegionManager.cs" />
     <Compile Include="Assets\Source\WorldRegionPoint.cs" />

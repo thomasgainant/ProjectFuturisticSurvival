@@ -7,7 +7,6 @@ public class WorldRegion : Entity {
     public enum Status
     {
         Ungenerated,
-        Generated,
         Displayed,
         DirtyDisplay,
         DirtyCollision
@@ -115,10 +114,9 @@ public class WorldRegion : Entity {
             }
         }
 
-        this.status = Status.Generated;
+        this.status = Status.DirtyDisplay;
         Debug.Log("WorldRegion "+this.ToString()+" generated");
         StartCoroutine(this.generateCollision());
-        StartCoroutine(this.display(this.lod));
 
         this.manager.generatingRegions.Remove(this);
         this.computingGeneration = false;
@@ -195,13 +193,15 @@ public class WorldRegion : Entity {
         filter.mesh.CombineMeshes(combineInstances);
         filter.mesh.RecalculateBounds();
         filter.mesh.RecalculateNormals();
-        renderer.material = (Material)Instantiate(this.level.resources[60]);
+        renderer.material = (Material)Instantiate(this.level.resources[61]);
+        renderer.sharedMaterial = (Material)Instantiate(this.level.resources[61]);
 
         for (int i = 0; i < REGIONSIZE; i++)
         {
             for (int j = 0; j < REGIONSIZE; j++)
             {
                 Destroy(this.points[i, j].gameObject);
+                this.points[i, j] = null;
             }
         }
 
@@ -258,7 +258,6 @@ public class WorldRegion : Entity {
         collider.sharedMesh = totalMesh;
 
         this.computingCollision = false;
-        this.status = Status.Displayed;
         yield return null;
     }
 

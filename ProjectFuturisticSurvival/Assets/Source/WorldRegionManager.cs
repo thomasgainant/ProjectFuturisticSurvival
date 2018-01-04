@@ -5,8 +5,10 @@ using UnityEngine;
 public class WorldRegionManager : Entity {
 
     public static int MAPSIZE = 256;
-    public static int REGIONSPOINTSGENERATEBUFFERSIZE = 10;
-    public static int REGIONSPOINTSDISPLAYBUFFERSIZE = 20;
+    public static float MAXHEIGHT = 2048;
+
+    public static int REGIONSPOINTSGENERATEBUFFERSIZE = 100;
+    public static int REGIONSPOINTSDISPLAYBUFFERSIZE = 100;
     public static int REGIONSGENERATIONBUFFERSIZE = 3;
     public static int REGIONSDISPLAYBUFFERSIZE = 1;
 
@@ -83,5 +85,19 @@ public class WorldRegionManager : Entity {
         this.regions[Mathf.FloorToInt(coors.x), Mathf.FloorToInt(coors.y)] = worldRegion;
 
         return worldRegion;
+    }
+
+    public Vector3 getTerrainHeightAt(Vector3 position)
+    {
+        Vector3 result = new Vector3(position.x, 0.0f, position.z);
+
+        Ray ray = new Ray(new Vector3(position.x, MAXHEIGHT + 0.0f, position.z), Vector3.down);
+        RaycastHit[] hits = Physics.RaycastAll(ray, MAXHEIGHT * 2.0f);
+        if(hits.Length > 0){
+            hits = Utils.SortCollisions(hits);
+            result = new Vector3(position.x, hits[0].point.y, position.z);
+        }
+
+        return result;
     }
 }

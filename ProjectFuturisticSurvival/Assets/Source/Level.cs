@@ -80,7 +80,8 @@ public class Level : MonoBehaviour {
             null,
             null,
             Resources.Load<Material>("Materials/default"),//60 Materials
-            Resources.Load<Material>("Materials/sand")
+            Resources.Load<Material>("Materials/sand"),
+            Resources.Load<Material>("Materials/rock")
         };
 
         if(this.regionManager == null)

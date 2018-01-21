@@ -31,7 +31,6 @@ public class Character : Entity {
             if (rigidBody == null)
             {
                 Vector3 terrainHeight = this.level.regionManager.getTerrainHeightAt(this.gameObject.transform.position);
-                Debug.Log("terrainHeight: "+terrainHeight);
                 this.gameObject.transform.position = terrainHeight + Vector3.up * (this.height/ 2.0f);
 
                 rigidBody = this.gameObject.AddComponent<Rigidbody>();

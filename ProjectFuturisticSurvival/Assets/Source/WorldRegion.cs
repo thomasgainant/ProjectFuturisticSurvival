@@ -45,6 +45,7 @@ public class WorldRegion : Entity {
         this.points = new WorldRegionPoint[REGIONSIZE, REGIONSIZE];
 
         this.loadHeightmapFromNoise(0, 0);
+        //Debug.Log(this.saveHeightmap());
 
         this.collisionObject = new GameObject("Collision");
         this.collisionObject.transform.position = this.gameObject.transform.position;
@@ -115,7 +116,7 @@ public class WorldRegion : Entity {
         }
 
         this.status = Status.DirtyDisplay;
-        Debug.Log("WorldRegion "+this.ToString()+" generated");
+        //Debug.Log("WorldRegion "+this.ToString()+" generated");
         StartCoroutine(this.generateCollision());
 
         this.manager.generatingRegions.Remove(this);
@@ -162,16 +163,16 @@ public class WorldRegion : Entity {
         {
             for (int j = 0; j < REGIONSIZE; j++)
             {
-                if(this.points[i, j].gameObject.GetComponent<MeshFilter>() != null)
+                if (this.points[i, j].gameObject.GetComponent<MeshFilter>() != null)
                 {
                     meshFilters.Add(this.points[i, j].gameObject.GetComponent<MeshFilter>());
                 }
             }
         }
         CombineInstance[] combineInstances = new CombineInstance[meshFilters.Count];
-        for(int i = 0; i < combineInstances.Length; i++)
+        for (int i = 0; i < combineInstances.Length; i++)
         {
-            if(meshFilters[i] != null){
+            if (meshFilters[i] != null) {
                 combineInstances[i].mesh = meshFilters[i].mesh;
                 combineInstances[i].transform = Matrix4x4.TRS(this.gameObject.transform.InverseTransformPoint(meshFilters[i].gameObject.transform.position), Quaternion.Inverse(meshFilters[i].gameObject.transform.rotation), Vector3.one);
             }
@@ -193,8 +194,17 @@ public class WorldRegion : Entity {
         filter.mesh.CombineMeshes(combineInstances);
         filter.mesh.RecalculateBounds();
         filter.mesh.RecalculateNormals();
-        renderer.material = (Material)Instantiate(this.level.resources[61]);
-        renderer.sharedMaterial = (Material)Instantiate(this.level.resources[61]);
+
+        switch(this.manager.regionsType){
+            case WorldRegionManager.RegionsType.Sand:
+                renderer.material = (Material)Instantiate(this.level.resources[61]);
+                renderer.sharedMaterial = (Material)Instantiate(this.level.resources[61]);
+                break;
+            case WorldRegionManager.RegionsType.Rock:
+                renderer.material = (Material)Instantiate(this.level.resources[62]);
+                renderer.sharedMaterial = (Material)Instantiate(this.level.resources[62]);
+                break;
+        }
 
         for (int i = 0; i < REGIONSIZE; i++)
         {
@@ -208,7 +218,7 @@ public class WorldRegion : Entity {
         this.manager.displayingRegions.Remove(this);
         this.computingDisplay = false;
         this.status = Status.Displayed;
-        Debug.Log("WorldRegion " + this.ToString() + " displayed");
+        //Debug.Log("WorldRegion " + this.ToString() + " displayed");
     }
 
     public IEnumerator generateCollision()
@@ -273,7 +283,26 @@ public class WorldRegion : Entity {
         {
             for (int j = 0; j < REGIONSIZE - 1; j++)
             {
-                this.heightmap[i,j] = Mathf.PerlinNoise(x + (i / (REGIONSIZE + 0.0f)), y + (j / (REGIONSIZE + 0.0f))) * 10.0f;
+                float xPositionInRegion = i / (REGIONSIZE + 0.0f);
+                float yPositionInRegion = j / (REGIONSIZE + 0.0f);
+
+                //Debug.Log(xPositionInRegion + ", " + yPositionInRegion);
+
+                float xPositionInMap = ((this.worldRegionCoors.x / (WorldRegionManager.MAPSIZE * 0.01f)) * (xPositionInRegion + 0.0f));
+                float yPositionInMap = ((this.worldRegionCoors.y / (WorldRegionManager.MAPSIZE * 0.01f)) * (yPositionInRegion + 0.0f));
+
+                //Debug.Log(xPositionInMap);
+                //Debug.Log(yPositionInMap);
+
+                float noiseValue = ((0.5f - Mathf.PerlinNoise(
+                    this.manager.regionsNoiseOffset.x + x + xPositionInMap,
+                    this.manager.regionsNoiseOffset.y + y + yPositionInMap)) * this.manager.regionsNoiseMultiply)
+                    + this.manager.regionsNoiseYOffset;
+
+                Debug.Log(noiseValue);
+
+                this.heightmap[i,j] = noiseValue;
+                //this.heightmap[i,j] = 0.0f;
             }
         }
     }

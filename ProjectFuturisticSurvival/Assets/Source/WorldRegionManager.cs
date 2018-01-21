@@ -4,6 +4,12 @@ using UnityEngine;
 
 public class WorldRegionManager : Entity {
 
+    public enum RegionsType
+    {
+        Sand,
+        Rock
+    }
+
     public static int MAPSIZE = 256;
     public static float MAXHEIGHT = 2048;
 
@@ -16,6 +22,11 @@ public class WorldRegionManager : Entity {
     public List<WorldRegion> generatingRegions = new List<WorldRegion>();
     public List<WorldRegion> displayingRegions = new List<WorldRegion>();
 
+    public RegionsType regionsType = RegionsType.Sand;
+    public Vector2 regionsNoiseOffset = Vector2.zero;
+    public float regionsNoiseMultiply = 10.0f;
+    public float regionsNoiseYOffset = 0.0f;
+
     public Camera mainCamera;
 
     public override void init()
@@ -23,6 +34,20 @@ public class WorldRegionManager : Entity {
         base.init();
 
         this.regions = new WorldRegion[MAPSIZE, MAPSIZE];
+
+        switch(this.regionsType)
+        {
+            case RegionsType.Sand:
+                this.regionsNoiseOffset = Vector2.zero;
+                this.regionsNoiseMultiply = 10.0f;
+                this.regionsNoiseYOffset = 0.0f;
+                break;
+            case RegionsType.Rock:
+                this.regionsNoiseOffset = new Vector2(0.0f, 0.0f);
+                this.regionsNoiseMultiply = 50.0f;
+                this.regionsNoiseYOffset = -10.0f;
+                break;
+        }
 
         this.spawnRegionAt(Vector2.zero);
     }
